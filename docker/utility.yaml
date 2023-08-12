@@ -1,0 +1,35 @@
+# /*******************************************************************************
+#  *
+#  * Copyright (c) {2022-2023} Francois J. Aouad.
+#  * All rights reserved. This program and the accompanying materials
+#  * are made available under the terms of the GNU General Public License v3.0
+#  * which accompanies this distribution, and is available at
+#  * https://www.gnu.org/licenses/gpl-3.0.en.html
+#  *
+#  *******************************************************************************/
+
+version: '3.7'
+services:
+  sonarqube:
+    image: sonarqube:8.9-community
+    container_name: 'sonar_c'
+    ports:
+      - 9000:9000
+    volumes:
+      - '../etc/sonarqube/data:/opt/sonarqube/data'
+      - '../etc/sonarqube/extensions:/opt/sonarqube/extensions'
+  nexus3:
+    image: 'sonatype/nexus3'
+    container_name: 'nexus_c'
+    ports:
+      - 8081:8081
+    volumes:
+      - '../etc/nexus:/nexus-data'
+  jenkins:
+    image: jenkins/jenkins
+    container_name: 'jenkins_c'
+    ports:
+        - '8080:8080'
+        - '50000:50000'
+    volumes:
+        - '../etc/jenkins:/var/jenkins_home'

@@ -1,0 +1,68 @@
+# /*******************************************************************************
+#  *
+#  * Copyright (c) {2022-2023} Francois J. Aouad.
+#  * All rights reserved. This program and the accompanying materials
+#  * are made available under the terms of the GNU General Public License v3.0
+#  * which accompanies this distribution, and is available at
+#  * https://www.gnu.org/licenses/gpl-3.0.en.html
+#  *
+#  *******************************************************************************/
+
+version: '3.7'
+services:
+  prometheus:
+    # prometheus server that scrapes metrics from prom-client server on express api
+    image: prom/prometheus:latest
+    container_name: prometheus_c
+    expose:
+      - 9090
+    ports:
+      - '9090:9090'
+    volumes:
+      - '../etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml'
+      - '../etc/prometheus/data:/var/prometheus'
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: always
+    depends_on:
+      - webflux
+  grafana:
+    # gui dashboard for logs, metrics and container health history
+    # v9.3.2
+    # https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/#migrate-to-v51-or-later
+    image: grafana/grafana:latest
+    container_name: grafana_c
+    expose:
+      - 3000
+    ports:
+      - '3000:3000'
+    user: 'root'
+    # must login as root user or 471|104 depending on which grafana image version is used
+    volumes:
+      - '../etc/grafana/grafana.ini:/etc/grafana/grafana.ini'
+      - '../etc/grafana/provisioning:/etc/grafana/provisioning'
+      - '../etc/grafana/data:/var/lib/grafana'
+    restart: always
+    depends_on:
+      - prometheus
+      - webflux
+      - mongodb
+  cAdvisor:
+        # server responsible for monitoring container health
+        image: 'gcr.io/cadvisor/cadvisor:latest'
+        container_name: cadvisor_c
+        restart: always
+        expose:
+           - 8080
+        ports:
+            - '8080:8080'
+        volumes:
+            #copy these directories to container, /var/run should be rw
+            - /:/rootfs:ro
+            - /var:/var/run:ro
+            - /sys:/sys:ro
+            - /var/lib/docker:/var/lib/docker:ro
+        devices:
+            - /dev/kmsg:/dev/kmsg
+        depends_on:
+            - prometheus
